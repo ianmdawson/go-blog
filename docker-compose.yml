@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  db:
+    image: postgres:13
+    ports:
+      - 5432:5432
+    volumes:
+      # Mount the DB dumps folder into the container, to be able to create & access database dumps:
+      - ./db/dumps:/db/dumps
+      # Mount out tmp folder, we might want to have access to something there during development:
+      - ./tmp:/tmp
+      # Mount our 'restoredb' script:
+      - ./bin/restoredb:/bin/restoredb:ro
+      # Mount our 'dumpdb' script:
+      - ./bin/dumpdb:/bin/dumpdb:ro
+      # We'll mount the 'postgres-data' volume into the location Postgres stores it's data:
+      - go-blog-postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    environment:
+      POSTGRES_USER: goblog
+      POSTGRES_PASSWORD: password
+  blog:
+    image: golang:1.15-alpine
+    volumes:
+      - .:/go/src/ianmdawson/go-blog
+    working_dir: /go/src/ianmdawson/go-blog
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    depends_on:
+      - db
+    build:
+      context: . # Use an image built from the specified dockerfile in the current directory.
+      dockerfile: Dockerfile
+    networks: 
+      - backend
+    environment:
+      DATABASE_URL: postgresql://goblog:password@db
+
+networks:
+  backend:
+volumes:
+  go-blog-postgres-data:
