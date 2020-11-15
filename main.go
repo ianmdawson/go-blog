@@ -10,7 +10,7 @@ import (
 	"regexp"
 )
 
-var templates = template.Must(template.ParseFiles("edit.html.gohtml", "view.html.gohtml"))
+var templates = template.Must(template.ParseFiles("tmpl/edit.html.gohtml", "tmpl/view.html.gohtml"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
 // Page represents page data
