@@ -1,0 +1,11 @@
+development:
+    driver: postgres
+    open: postgresql://goblog:password@db/blog_dev?sslmode=disable
+
+test:
+    driver: postgres
+    open: postgresql://goblog:password@db/blog_test?sslmode=disable
+
+cluster:
+    driver: postgres
+    open: $DATABASE_URL

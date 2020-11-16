@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   db:
-    image: postgres:13
+    image: postgres:12
     ports:
       - 5432:5432
     volumes:
@@ -37,7 +37,7 @@ services:
     networks: 
       - backend
     environment:
-      DATABASE_URL: postgresql://goblog:password@db
+      DATABASE_URL: postgresql://goblog:password@db:5432/blog_dev?sslmode=disable
 
 networks:
   backend:
