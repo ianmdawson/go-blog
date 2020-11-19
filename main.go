@@ -15,12 +15,16 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-var templates = template.Must(template.ParseFiles("tmpl/edit.html.gohtml", "tmpl/view.html.gohtml", "tmpl/new.html.gohtml"))
+const templateDir string = "tmpl"
+
+var templates = template.Must(template.ParseGlob(templateDir + "/*.gohtml"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
+
 var db *pgx.Conn
 
 // TODO:
-// Spruce up the page templates by making them valid HTML and adding some CSS rules. Bootstrap, etc.
+//
+// - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
 // - Page model rename as Page in DB, or rename model as Post or rename both to Entry
 // - Paginated Page index
 // - Separate models into model folder
@@ -29,6 +33,7 @@ var db *pgx.Conn
 // - Add a handler to make the web root redirect for /
 // - Implement inter-page linking by converting instances of [PageName] to
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this)
+// - Users, permissions
 
 func getDB() *pgx.Conn {
 	conn, err := pgx.Connect(context.Background(), databaseURL())
@@ -184,7 +189,6 @@ func getIDFromRequest(w http.ResponseWriter, r *http.Request) (string, error) {
 	return m[2], nil // Title is the second sub-expression
 }
 
-// TODO: implement context
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
@@ -208,5 +212,7 @@ func main() {
 	db = getDB()
 	defer db.Close(context.Background())
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	port := ":8080"
+	fmt.Println("Setting up to listen on port ", port)
+	log.Fatal(http.ListenAndServe(port, nil))
 }
