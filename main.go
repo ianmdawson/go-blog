@@ -27,6 +27,7 @@ var db *pgx.Conn
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
 // - Page model rename as Page in DB, or rename model as Post or rename both to Entry
 // - Paginated Page index
+// - Page submission form template
 // - Separate models into model folder
 // - separate log/routing logic into "routes"?
 // - separate DB access into its own folder
@@ -101,6 +102,31 @@ func (p *Page) find(id uuid.UUID) error {
 	return nil
 }
 
+// GetAllPages retrieves all Page models in the database
+// limit the number of results to return
+// offset the number of results to skip, useful for pagination
+func GetAllPages(offset int, limit int) ([]*Page, error) {
+	sql := `SELECT id, title, body, created_at, updated_at FROM posts ORDER BY created_at DESC OFFSET $1 LIMIT $2;`
+	rows, err := db.Query(context.Background(), sql, offset, limit)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	var pages []*Page
+
+	for rows.Next() {
+		p := &Page{}
+		err = rows.Scan(&p.ID, &p.Title, &p.Body, &p.CreatedAt, &p.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		pages = append(pages, p)
+	}
+
+	return pages, nil
+}
+
 func loadPage(id string) (*Page, error) {
 	uuid := uuid.FromStringOrNil(id)
 	page := &Page{}
@@ -128,6 +154,25 @@ func editHandler(w http.ResponseWriter, r *http.Request, id string) {
 		p = &Page{Title: id}
 	}
 	renderTemplate(w, "edit", p)
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
+	// TODO: get skip and limit from query params
+	skip := 0
+	limit := 50
+	pages, err := GetAllPages(skip, limit)
+	if err != nil {
+		fmt.Println("Something went wrong loading pages:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = templates.ExecuteTemplate(w, "index.html.gohtml", pages)
+	if err != nil {
+		fmt.Println("500", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func newHandler(w http.ResponseWriter, r *http.Request) {
@@ -208,6 +253,7 @@ func main() {
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.HandleFunc("/new/", newHandler)
 	http.HandleFunc("/create", createHandler)
+	http.HandleFunc("/index", indexHandler)
 
 	db = getDB()
 	defer db.Close(context.Background())
