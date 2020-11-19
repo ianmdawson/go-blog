@@ -19,6 +19,17 @@ var templates = template.Must(template.ParseFiles("tmpl/edit.html.gohtml", "tmpl
 var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 var db *pgx.Conn
 
+// TODO:
+// Spruce up the page templates by making them valid HTML and adding some CSS rules. Bootstrap, etc.
+// - Page model rename as Page in DB, or rename model as Post or rename both to Entry
+// - Paginated Page index
+// - Separate models into model folder
+// - separate log/routing logic into "routes"?
+// - separate DB access into its own folder
+// - Add a handler to make the web root redirect for /
+// - Implement inter-page linking by converting instances of [PageName] to
+//     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this)
+
 func getDB() *pgx.Conn {
 	conn, err := pgx.Connect(context.Background(), databaseURL())
 	if err != nil {
@@ -34,12 +45,6 @@ func databaseURL() string {
 	}
 	return "postgres://goblog:password@localhost:5432/blog_dev"
 }
-
-// TODO:
-// - Add a handler to make the web root redirect for /
-// - Spruce up the page templates by making them valid HTML and adding some CSS rules.
-// - Implement inter-page linking by converting instances of [PageName] to
-//     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this)
 
 // Page represents page data
 type Page struct {
