@@ -1,6 +1,6 @@
 -- +goose Up
 -- SQL in this section is executed when the migration is applied.
-CREATE TABLE posts (
+CREATE TABLE pages (
 		id UUID PRIMARY KEY,
 		title VARCHAR,
 		body TEXT,
@@ -10,4 +10,4 @@ CREATE TABLE posts (
 
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
-DROP TABLE posts;
+DROP TABLE pages;

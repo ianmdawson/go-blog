@@ -25,7 +25,6 @@ var db *pgx.Conn
 // TODO:
 //
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
-// - Page model rename as Page in DB, or rename model as Post or rename both to Entry
 // - Paginated Page index
 // - Page submission form template
 // - Separate models into model folder
@@ -63,7 +62,7 @@ type Page struct {
 
 func (p *Page) update() error {
 	sql := ` -- name: PageUpdate :one
-		UPDATE posts
+		UPDATE pages
 		SET title = $2, body = $3, updated_at = now()
 		WHERE id=$1
 		RETURNING id, title, body, created_at, updated_at
@@ -78,7 +77,7 @@ func (p *Page) update() error {
 
 func (p *Page) create() error {
 	sql := ` -- name: PageCreate :one
-		INSERT INTO posts
+		INSERT INTO pages
 		(id, title, body)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (id) DO NOTHING
@@ -93,7 +92,7 @@ func (p *Page) create() error {
 }
 
 func (p *Page) find(id uuid.UUID) error {
-	sql := `SELECT id, title, body, created_at, updated_at FROM posts WHERE id=$1;`
+	sql := `SELECT id, title, body, created_at, updated_at FROM pages WHERE id=$1;`
 	err := db.QueryRow(context.Background(), sql, id).Scan(&p.ID, &p.Title, &p.Body, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
 		return err
@@ -106,7 +105,7 @@ func (p *Page) find(id uuid.UUID) error {
 // limit the number of results to return
 // offset the number of results to skip, useful for pagination
 func GetAllPages(offset int, limit int) ([]*Page, error) {
-	sql := `SELECT id, title, body, created_at, updated_at FROM posts ORDER BY created_at DESC OFFSET $1 LIMIT $2;`
+	sql := `SELECT id, title, body, created_at, updated_at FROM pages ORDER BY created_at DESC OFFSET $1 LIMIT $2;`
 	rows, err := db.Query(context.Background(), sql, offset, limit)
 	defer rows.Close()
 	if err != nil {
