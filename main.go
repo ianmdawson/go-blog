@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/ianmdawson/go-blog/models"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -19,8 +20,6 @@ const templateDir string = "tmpl"
 
 var templates = template.Must(template.ParseGlob(templateDir + "/*.gohtml"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
-
-var db *pgx.Conn
 
 // TODO:
 //
@@ -67,7 +66,7 @@ func (p *Page) update() error {
 		WHERE id=$1
 		RETURNING id, title, body, created_at, updated_at
 		;`
-	err := db.QueryRow(context.Background(), sql, p.ID, p.Title, p.Body).Scan(&p.ID, &p.Title, &p.Body, &p.CreatedAt, &p.UpdatedAt)
+	err := models.DB.QueryRow(context.Background(), sql, p.ID, p.Title, p.Body).Scan(&p.ID, &p.Title, &p.Body, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
 		return err
 	}
@@ -83,7 +82,7 @@ func (p *Page) create() error {
 		ON CONFLICT (id) DO NOTHING
 		RETURNING id, title, body, created_at, updated_at
 		;`
-	err := db.QueryRow(context.Background(), sql, p.ID, p.Title, p.Body).Scan(&p.ID, &p.Title, &p.Body, &p.CreatedAt, &p.UpdatedAt)
+	err := models.DB.QueryRow(context.Background(), sql, p.ID, p.Title, p.Body).Scan(&p.ID, &p.Title, &p.Body, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
 		return err
 	}
@@ -93,7 +92,7 @@ func (p *Page) create() error {
 
 func (p *Page) find(id uuid.UUID) error {
 	sql := `SELECT id, title, body, created_at, updated_at FROM pages WHERE id=$1;`
-	err := db.QueryRow(context.Background(), sql, id).Scan(&p.ID, &p.Title, &p.Body, &p.CreatedAt, &p.UpdatedAt)
+	err := models.DB.QueryRow(context.Background(), sql, id).Scan(&p.ID, &p.Title, &p.Body, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
 		return err
 	}
@@ -106,7 +105,7 @@ func (p *Page) find(id uuid.UUID) error {
 // offset the number of results to skip, useful for pagination
 func GetAllPages(offset int, limit int) ([]*Page, error) {
 	sql := `SELECT id, title, body, created_at, updated_at FROM pages ORDER BY created_at DESC OFFSET $1 LIMIT $2;`
-	rows, err := db.Query(context.Background(), sql, offset, limit)
+	rows, err := models.DB.Query(context.Background(), sql, offset, limit)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -247,15 +246,15 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 }
 
 func main() {
+	models.DB = getDB()
+	defer models.DB.Close(context.Background())
+
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.HandleFunc("/new/", newHandler)
 	http.HandleFunc("/create", createHandler)
 	http.HandleFunc("/index", indexHandler)
-
-	db = getDB()
-	defer db.Close(context.Background())
 
 	port := ":8080"
 	fmt.Println("Setting up to listen on port ", port)
