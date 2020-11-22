@@ -20,13 +20,11 @@ var templates = template.Must(template.ParseGlob(templateDir + "/*.gohtml"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 
 // TODO:
-//
+// - New Page button
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
 // - Paginated Page index
 // - Page submission form template
-// - Separate models into model folder
 // - separate log/routing logic into "routes"?
-// - separate DB access into its own folder
 // - Add a handler to make the web root redirect for /
 // - Implement inter-page linking by converting instances of [PageName] to
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this)
