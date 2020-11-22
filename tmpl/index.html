@@ -1,0 +1,31 @@
+{{template "header" .}}
+<div class="row mb-3">
+  <div class="col-md-4">
+    <span>Showing {{len .Pages}} of total: {{.Count}}</span>
+    <nav aria-label="Page Navigation">
+      <ul class="pagination">
+        <li class="page-item"><a class="page-link" href="#">Previous</a></li>
+        <li class="page-item"><a class="page-link" href="#">{{.ResultsPageNumber}}</a></li>
+        <li class="page-item"><a class="page-link" href="#">Next</a></li>
+      </ul>
+    </nav>
+    <table class="table">
+      <thead>
+        <th scope="col">Title</th>
+        <th scope="col">Created At</th>
+      </thead>
+      <tbody>
+        {{range .Pages}}
+          <tr>
+            <td><a href='view/{{.ID}}'>{{.Title}}</a></td>
+            <td>{{.CreatedAt.Format "Mon Jan 2 15:04 MST 2006" }}</td>
+          </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-8">
+      {{template "viewPartial" .}}
+  </div>
+</div>
+{{template "footer"}}

@@ -16,7 +16,7 @@ import (
 
 const templateDir string = "tmpl"
 
-var templates = template.Must(template.ParseGlob(templateDir + "/*.gohtml"))
+var templates = template.Must(template.ParseGlob(templateDir + "/*.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 
 // TODO:
@@ -24,11 +24,25 @@ var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
 // - Paginated Page index
 // - Page submission form template
-// - separate log/routing logic into "routes"?
+// - separate log/routing logic into logger/"routes"?
 // - Add a handler to make the web root redirect for /
 // - Implement inter-page linking by converting instances of [PageName] to
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this)
 // - Users, permissions
+
+type pagePaths struct {
+	PageEditPath  string
+	PageIndexPath string
+	PageNewPath   string
+	PageViewPath  string
+}
+
+var links = pagePaths{
+	PageEditPath:  "/edit/",
+	PageIndexPath: "/index",
+	PageNewPath:   "/new",
+	PageViewPath:  "/view",
+}
 
 func databaseURL() string {
 	var databaseURL = os.Getenv("DATABASE_URL")
@@ -53,6 +67,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, id string) {
 	p, err := loadPage(id)
 	if err != nil {
 		http.Redirect(w, r, "/new/", http.StatusFound)
+		// TODO: make this 404 NotFound instead
 		// http.NotFound(w, r)
 		return
 	}
@@ -70,15 +85,38 @@ func editHandler(w http.ResponseWriter, r *http.Request, id string) {
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 	// TODO: get skip and limit from query params
-	skip := 0
+	offset := 0
 	limit := 50
-	pages, err := models.GetAllPages(skip, limit)
+	pages, err := models.GetAllPages(offset, limit)
 	if err != nil {
 		fmt.Println("Something went wrong loading pages:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = templates.ExecuteTemplate(w, "index.html.gohtml", pages)
+
+	count, err := models.CountAllPages()
+	if err != nil {
+		fmt.Println("Something went wrong loading pages count:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	indexData := struct {
+		Pages             []*models.Page
+		Page              *models.Page
+		Count             *int
+		ResultsPageNumber int
+		Limit             int
+		Links             pagePaths
+	}{
+		pages,
+		pages[0],
+		count,
+		1 + (offset / limit),
+		limit,
+		links,
+	}
+	err = templates.ExecuteTemplate(w, "index.html", indexData)
 	if err != nil {
 		fmt.Println("500", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -130,7 +168,14 @@ func saveHandler(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *models.Page) {
-	err := templates.ExecuteTemplate(w, tmpl+".html.gohtml", p)
+	var templateData = struct {
+		Page  *models.Page
+		Links pagePaths
+	}{
+		p,
+		links,
+	}
+	err := templates.ExecuteTemplate(w, tmpl+".html", templateData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -163,7 +208,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer models.DB.Close(context.Background())
 
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
@@ -175,4 +219,5 @@ func main() {
 	port := ":8080"
 	fmt.Println("Setting up to listen on port ", port)
 	log.Fatal(http.ListenAndServe(port, nil))
+	defer models.DB.Close(context.Background())
 }

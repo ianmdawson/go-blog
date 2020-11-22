@@ -1,14 +1,14 @@
-{{template "header"}}
+{{template "header" .}}
 <h1>New</h1>
 
 <form action="/create" method="POST">
 <div>
   <p>Title</p>
-  <textarea name="title">{{printf "%s" .Title}}</textarea>
+  <textarea name="title">{{printf "%s" .Page.Title}}</textarea>
 </div>
 <div>
   <p>Post Body</p>
-  <textarea name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea>
+  <textarea name="body" rows="20" cols="80">{{printf "%s" .Page.Body}}</textarea>
 </div>
 <div>
   <input type="submit" value="Save">
