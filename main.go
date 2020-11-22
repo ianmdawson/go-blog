@@ -13,7 +13,6 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/ianmdawson/go-blog/models"
-	"github.com/jackc/pgx/v4"
 )
 
 const templateDir string = "tmpl"
@@ -33,14 +32,6 @@ var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 // - Implement inter-page linking by converting instances of [PageName] to
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this)
 // - Users, permissions
-
-func getDB() *pgx.Conn {
-	conn, err := pgx.Connect(context.Background(), databaseURL())
-	if err != nil {
-		panic(err)
-	}
-	return conn
-}
 
 func databaseURL() string {
 	var databaseURL = os.Getenv("DATABASE_URL")
@@ -246,7 +237,10 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 }
 
 func main() {
-	models.DB = getDB()
+	err := models.InitDB(databaseURL())
+	if err != nil {
+		panic(err)
+	}
 	defer models.DB.Close(context.Background())
 
 	http.HandleFunc("/view/", makeHandler(viewHandler))
