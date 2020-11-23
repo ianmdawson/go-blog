@@ -86,15 +86,15 @@ func GetAllPages(offset int, limit int) ([]*Page, error) {
 }
 
 // CountAllPages returns the number of page records
-func CountAllPages() (*int, error) {
+func CountAllPages() (int, error) {
 	sql := `SELECT COUNT(*) FROM pages;`
 
 	var count int
 
 	err := DB.QueryRow(context.Background(), sql).Scan(&count)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &count, nil
+	return count, nil
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 
 	"github.com/gofrs/uuid"
 	"github.com/ianmdawson/go-blog/models"
@@ -84,12 +85,43 @@ func editHandler(w http.ResponseWriter, r *http.Request, id string) {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
-	// TODO: get skip and limit from query params
-	offset := 0
+	q := r.URL.Query()
+	resultsPageParam := q["page"]
+	resultsPage := 1
+	if len(resultsPageParam) != 0 {
+		resultsPageInt, err := strconv.Atoi(resultsPageParam[0])
+		if err != nil {
+			fmt.Println("An error occurred parsing the resultsPageParam", err)
+			resultsPage = 1
+		}
+		if resultsPageInt > 0 {
+			resultsPage = resultsPageInt
+		}
+	}
+
+	limitParam := q["limit"]
 	limit := 50
+	if len(limitParam) > 0 {
+		limitInt, err := strconv.Atoi(limitParam[0])
+		if err != nil {
+			fmt.Println("An error occurred parsing the resultsLimitParam", err)
+		}
+		if limitInt > 0 && limitInt < 50 {
+			limit = limitInt
+		}
+	}
+
+	offset := (resultsPage - 1) * limit
 	pages, err := models.GetAllPages(offset, limit)
 	if err != nil {
 		fmt.Println("Something went wrong loading pages:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	firstPages, err := models.GetAllPages(0, 1)
+	if err != nil {
+		fmt.Println("Something went wrong loading the first page:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -101,19 +133,32 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// resultsPageNumber := 1 + (offset / limit)
+	prevPageNumber := resultsPage - 1
+	if prevPageNumber < 0 {
+		prevPageNumber = 0
+	}
+	atLastPage := ((resultsPage-1)*limit)+len(pages) >= count
+
 	indexData := struct {
 		Pages             []*models.Page
 		Page              *models.Page
-		Count             *int
+		Count             int
 		ResultsPageNumber int
 		Limit             int
+		NextPage          int
+		PreviousPage      int
+		AtLastPage        bool
 		Links             pagePaths
 	}{
 		pages,
-		pages[0],
+		firstPages[0],
 		count,
-		1 + (offset / limit),
+		resultsPage,
 		limit,
+		resultsPage + 1,
+		resultsPage - 1,
+		atLastPage,
 		links,
 	}
 	err = templates.ExecuteTemplate(w, "index.html", indexData)
