@@ -23,7 +23,6 @@ var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 // TODO:
 // - New Page button
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
-// - Paginated Page index
 // - Page submission form template
 // - separate log/routing logic into logger/"routes"?
 // - Add a handler to make the web root redirect for /
