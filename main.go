@@ -133,13 +133,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// resultsPageNumber := 1 + (offset / limit)
 	prevPageNumber := resultsPage - 1
 	if prevPageNumber < 0 {
 		prevPageNumber = 0
 	}
 	atLastPage := ((resultsPage-1)*limit)+len(pages) >= count
 
+	// TODO: move pagination params into their own struct to clean up indexHandler
 	indexData := struct {
 		Pages             []*models.Page
 		Page              *models.Page
