@@ -23,6 +23,7 @@ func tearDown() {
 }
 
 // TODO: dockerize tests and test setup
+// TODO: make database reset more efficient
 func setUpDB() {
 	cmd := exec.Command("make", "-C", "../", "reset-db")
 	fmt.Println("Resetting the database...")
@@ -83,4 +84,28 @@ func TestPageFind(t *testing.T) {
 	assert.Equal(t, p.ID, createdPages[0].ID)
 	assert.NotNil(t, p.CreatedAt)
 	assert.NotNil(t, p.UpdatedAt)
+}
+
+func TestPageUpdate(t *testing.T) {
+	setUpDB()
+	defer tearDown()
+
+	createdPages := seedDatabase(t)
+
+	p := &Page{}
+	err := p.Find(createdPages[0].ID)
+	assert.NoError(t, err)
+
+	originalUpdatedAt := p.UpdatedAt
+
+	newBody := "Totally new content"
+	p.Body = []byte(newBody)
+	err = p.Update()
+	assert.NoError(t, err)
+
+	assert.Equal(t, p.Title, testTitle)
+	assert.Equal(t, string((p.Body)), newBody)
+	assert.Equal(t, p.ID, createdPages[0].ID)
+	assert.NotNil(t, p.CreatedAt)
+	assert.True(t, p.UpdatedAt.After(originalUpdatedAt))
 }
