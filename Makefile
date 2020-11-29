@@ -9,6 +9,9 @@ endif
 DEV_DATABASE_URL := $(DATABASE_URL)/blog_dev?sslmode=disable
 TEST_DATABASE_URL := $(DATABASE_URL)/blog_test?sslmode=disable
 
+test:
+	go test ./...
+
 build-run:
 	go build $(project_files)
 	./main
