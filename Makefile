@@ -34,7 +34,7 @@ db-drop:
 	psql $(DATABASE_URL)?sslmode=disable -c "DROP DATABASE IF EXISTS blog_dev;"
 	psql $(DATABASE_URL)?sslmode=disable -c "DROP DATABASE IF EXISTS blog_test;"
 
-reset-db: db-drop db-setup
+reset-db: db-drop db-setup migrate
 
 migrate:
 	goose postgres $(DEV_DATABASE_URL) up
@@ -47,3 +47,7 @@ migrate-status:
 migrate-down:
 	goose postgres $(DEV_DATABASE_URL) status
 	goose postgres $(TEST_DATABASE_URL) status
+
+migrate-reset:
+	goose postgres $(DEV_DATABASE_URL) reset
+	goose postgres $(TEST_DATABASE_URL) reset
