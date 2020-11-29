@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"testing"
@@ -15,6 +16,11 @@ If you haven't already, run the following to set up the database:
 	$ make db-setup
 	$ make migrate
 */
+
+func tearDown() {
+	DB.Close(context.Background())
+	return
+}
 
 // TODO: dockerize tests and test setup
 func setUpDB() {
@@ -47,6 +53,7 @@ func seedDatabase(t *testing.T) []*Page {
 
 func TestGetAllPages(t *testing.T) {
 	setUpDB()
+	defer tearDown()
 	createdPages := seedDatabase(t)
 
 	offset := 0
@@ -60,4 +67,20 @@ func TestGetAllPages(t *testing.T) {
 	assert.NotNil(t, p.CreatedAt)
 	assert.NotNil(t, p.UpdatedAt)
 	assert.Equal(t, p.ID, createdPages[0].ID)
+}
+
+func TestPageFind(t *testing.T) {
+	setUpDB()
+	defer tearDown()
+
+	createdPages := seedDatabase(t)
+
+	p := &Page{}
+	err := p.Find(createdPages[0].ID)
+	assert.NoError(t, err)
+	assert.Equal(t, p.Title, testTitle)
+	assert.Equal(t, string((p.Body)), testPageBody)
+	assert.Equal(t, p.ID, createdPages[0].ID)
+	assert.NotNil(t, p.CreatedAt)
+	assert.NotNil(t, p.UpdatedAt)
 }
