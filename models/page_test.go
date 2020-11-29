@@ -70,6 +70,16 @@ func TestGetAllPages(t *testing.T) {
 	assert.Equal(t, p.ID, createdPages[0].ID)
 }
 
+func TestCountAllPages(t *testing.T) {
+	setUpDB()
+	defer tearDown()
+	_ = seedDatabase(t)
+
+	count, err := CountAllPages()
+	assert.NoError(t, err)
+	assert.Equal(t, count, 1)
+}
+
 func TestPageFind(t *testing.T) {
 	setUpDB()
 	defer tearDown()

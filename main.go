@@ -21,7 +21,7 @@ var templates = template.Must(template.ParseGlob(templateDir + "/*.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 
 // TODO:
-// - TESTS!
+// - routing/http handler tests
 // - New Page button
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
 // - Page submission form template
