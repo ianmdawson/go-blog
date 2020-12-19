@@ -106,6 +106,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var firstPage *models.Page
+	if firstPages == nil {
+		firstPage = nil
+	} else {
+		firstPage = firstPages[0]
+	}
+
 	count, err := models.CountAllPages()
 	if err != nil {
 		fmt.Println("Something went wrong loading pages count:", err)
@@ -132,7 +139,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		Links             pagePaths
 	}{
 		pages,
-		firstPages[0],
+		firstPage,
 		count,
 		resultsPage,
 		limit,
