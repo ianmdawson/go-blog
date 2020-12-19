@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/gofrs/uuid"
+	"github.com/gorilla/mux"
 	"github.com/ianmdawson/go-blog/models"
 )
 
@@ -40,8 +41,8 @@ type pagePaths struct {
 
 var links = pagePaths{
 	PageEditPath:  "/edit/",
-	PageIndexPath: "/index",
-	PageNewPath:   "/new",
+	PageIndexPath: "/",
+	PageNewPath:   "/posts/new/",
 	PageViewPath:  "/view",
 }
 
@@ -62,25 +63,6 @@ func loadPage(id string) (*models.Page, error) {
 		return nil, err
 	}
 	return page, nil
-}
-
-func viewHandler(w http.ResponseWriter, r *http.Request, id string) {
-	p, err := loadPage(id)
-	if err != nil {
-		http.Redirect(w, r, "/new/", http.StatusFound)
-		// TODO: make this 404 NotFound instead
-		// http.NotFound(w, r)
-		return
-	}
-	renderTemplate(w, "view", p)
-}
-
-func editHandler(w http.ResponseWriter, r *http.Request, id string) {
-	p, err := loadPage(id)
-	if err != nil {
-		p = &models.Page{Title: id}
-	}
-	renderTemplate(w, "edit", p)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -194,9 +176,13 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/view/%s", page.ID), http.StatusFound)
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, id string) {
+func savePost(w http.ResponseWriter, r *http.Request) {
 	body := r.FormValue("body")
 	title := r.FormValue("title")
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
 	uuid, err := uuid.FromString(id)
 	if err != nil {
 		fmt.Println("Cannot parse ID for: ", id)
@@ -235,17 +221,33 @@ func getIDFromRequest(w http.ResponseWriter, r *http.Request) (string, error) {
 	return m[2], nil // Title is the second sub-expression
 }
 
-func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
-		id, err := getIDFromRequest(w, r)
-		if err != nil {
-			fmt.Println(err)
-			http.NotFound(w, r)
-			return
-		}
-		fn(w, r, id)
+func viewPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	p, err := loadPage(id)
+	if err != nil {
+		// TODO: make this 404 NotFound instead
+		// http.NotFound(w, r)
+		http.Redirect(w, r, links.PageNewPath, http.StatusFound)
+		return
 	}
+	renderTemplate(w, "view", p)
+}
+
+func editPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	p, err := loadPage(id)
+	if err != nil {
+		p = &models.Page{Title: id}
+	}
+	renderTemplate(w, "edit", p)
 }
 
 func main() {
@@ -254,12 +256,15 @@ func main() {
 		panic(err)
 	}
 
-	http.HandleFunc("/view/", makeHandler(viewHandler))
-	http.HandleFunc("/edit/", makeHandler(editHandler))
-	http.HandleFunc("/save/", makeHandler(saveHandler))
-	http.HandleFunc("/new/", newHandler)
-	http.HandleFunc("/create", createHandler)
-	http.HandleFunc("/index", indexHandler)
+	r := mux.NewRouter()
+	r.HandleFunc("/", indexHandler)
+	r.HandleFunc("/view/{id:[a-z0-9-]+}", viewPost)
+	r.HandleFunc("/edit/{id:[a-z0-9-]+}", editPost)
+	r.HandleFunc("/save/{id:[a-z0-9-]+}", savePost)
+	r.HandleFunc("/posts/new/", newHandler)
+	r.HandleFunc("/create", createHandler)
+
+	http.Handle("/", r)
 
 	port := ":8080"
 	fmt.Println("Setting up to listen on port ", port)
