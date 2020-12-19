@@ -1,4 +1,4 @@
 {{template "header" .}}
-<p>[<a href="/edit/{{.Page.ID}}">edit</a>]</p>
+<p>[<a href="{{.Links.PageEditPath}}{{.Page.ID}}">edit</a>]</p>
 {{template "viewPartial" .}}
 {{template "footer"}}

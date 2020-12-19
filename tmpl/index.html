@@ -35,7 +35,7 @@
       <tbody>
         {{range .Pages}}
           <tr>
-            <td><a href='view/{{.ID}}'>{{.Title}}</a></td>
+            <td><a href="{{$.Links.PageViewPath}}{{.ID}}">{{.Title}}</a></td>
             <td>{{.CreatedAt.Format "Mon Jan 2 15:04 MST 2006" }}</td>
           </tr>
         {{end}}

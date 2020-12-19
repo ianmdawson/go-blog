@@ -1,7 +1,7 @@
 {{template "header" .}}
 <h1>Editing {{.Page.Title}}</h1>
 
-<form action="/save/{{.Page.ID}}" method="POST">
+<form action="{{.Links.PageSavePath}}{{.Page.ID}}" method="POST">
 <div>
   <p>Title</p>
   <textarea name="title">{{printf "%s" .Page.Title}}</textarea>

@@ -23,6 +23,7 @@ var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 
 // TODO:
 // - Users and permissions
+// - Documentation
 // - routing/http handler tests
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
 // - Page edit/new shared submission form template
@@ -31,17 +32,21 @@ var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this?)
 
 type pagePaths struct {
-	PageEditPath  string
-	PageIndexPath string
-	PageNewPath   string
-	PageViewPath  string
+	PageEditPath   string
+	PageIndexPath  string
+	PageNewPath    string
+	PageViewPath   string
+	PageCreatePath string
+	PageSavePath   string
 }
 
 var links = pagePaths{
-	PageEditPath:  "/edit/",
-	PageIndexPath: "/",
-	PageNewPath:   "/posts/new/",
-	PageViewPath:  "/view",
+	PageEditPath:   "/posts/edit/",
+	PageIndexPath:  "/",
+	PageNewPath:    "/posts/new/",
+	PageViewPath:   "/posts/",
+	PageCreatePath: "/posts/create/",
+	PageSavePath:   "/posts/save/",
 }
 
 func databaseURL() string {
@@ -178,7 +183,7 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, fmt.Sprintf("/view/%s", page.ID), http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("%s%s", links.PageViewPath, page.ID), http.StatusFound)
 }
 
 func savePost(w http.ResponseWriter, r *http.Request) {
@@ -200,7 +205,7 @@ func savePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "/view/"+id, http.StatusFound)
+	http.Redirect(w, r, links.PageViewPath+id, http.StatusFound)
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *models.Page) {
@@ -263,11 +268,11 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
-	r.HandleFunc("/view/{id:[a-z0-9-]+}", viewPost)
-	r.HandleFunc("/edit/{id:[a-z0-9-]+}", editPost)
-	r.HandleFunc("/save/{id:[a-z0-9-]+}", savePost)
+	r.HandleFunc("/posts/{id:[a-z0-9-]+}", viewPost)
+	r.HandleFunc("/posts/edit/{id:[a-z0-9-]+}", editPost)
+	r.HandleFunc("/posts/save/{id:[a-z0-9-]+}", savePost)
 	r.HandleFunc("/posts/new/", newHandler)
-	r.HandleFunc("/create", createHandler)
+	r.HandleFunc("/posts/create/", createHandler)
 
 	http.Handle("/", r)
 
