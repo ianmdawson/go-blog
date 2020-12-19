@@ -40,17 +40,6 @@ func databaseURL() string {
 	return "postgres://goblog:password@localhost:5432/blog_dev"
 }
 
-// gorilla mux now handles this
-// var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
-// func getIDFromRequest(w http.ResponseWriter, r *http.Request) (string, error) {
-// 	m := validPath.FindStringSubmatch(r.URL.Path)
-// 	if m == nil {
-// 		fmt.Println(r.URL.Path)
-// 		return "", errors.New("invalid Page")
-// 	}
-// 	return m[2], nil // Title is the second sub-expression
-// }
-
 func main() {
 	err := models.InitDB(databaseURL())
 	if err != nil {
