@@ -27,6 +27,7 @@ var validPath = regexp.MustCompile("^/(edit|save|view)/([-a-zA-Z0-9]+)$")
 // - routing/http handler tests
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
 // - Page edit/new shared submission form template
+// - logging middleware
 // - separate log/routing logic into logger/"routes"?
 // - Implement inter-page linking by converting instances of [PageName] to
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this?)
@@ -41,12 +42,12 @@ type pagePaths struct {
 }
 
 var links = pagePaths{
-	PageEditPath:   "/posts/edit/",
+	PageEditPath:   "/pages/edit/",
 	PageIndexPath:  "/",
-	PageNewPath:    "/posts/new/",
-	PageViewPath:   "/posts/",
-	PageCreatePath: "/posts/create/",
-	PageSavePath:   "/posts/save/",
+	PageNewPath:    "/pages/new/",
+	PageViewPath:   "/pages/",
+	PageCreatePath: "/pages/create/",
+	PageSavePath:   "/pages/save/",
 }
 
 func databaseURL() string {
@@ -161,12 +162,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func newHandler(w http.ResponseWriter, r *http.Request) {
+func newPageHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 	renderTemplate(w, "new", &models.Page{})
 }
 
-func createHandler(w http.ResponseWriter, r *http.Request) {
+func createPageHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 	body := r.FormValue("body")
 	title := r.FormValue("title")
@@ -186,7 +187,8 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("%s%s", links.PageViewPath, page.ID), http.StatusFound)
 }
 
-func savePost(w http.ResponseWriter, r *http.Request) {
+func savePage(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 	body := r.FormValue("body")
 	title := r.FormValue("title")
 
@@ -231,7 +233,7 @@ func getIDFromRequest(w http.ResponseWriter, r *http.Request) (string, error) {
 	return m[2], nil // Title is the second sub-expression
 }
 
-func viewPost(w http.ResponseWriter, r *http.Request) {
+func viewPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 
 	vars := mux.Vars(r)
@@ -247,7 +249,7 @@ func viewPost(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "view", p)
 }
 
-func editPost(w http.ResponseWriter, r *http.Request) {
+func editPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 
 	vars := mux.Vars(r)
@@ -268,11 +270,11 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc(links.PageIndexPath, indexHandler)
-	r.HandleFunc(links.PageViewPath+"{id:[a-z0-9-]+}", viewPost)
-	r.HandleFunc(links.PageEditPath+"{id:[a-z0-9-]+}", editPost)
-	r.HandleFunc(links.PageSavePath+"{id:[a-z0-9-]+}", savePost)
-	r.HandleFunc(links.PageNewPath, newHandler)
-	r.HandleFunc(links.PageCreatePath, createHandler)
+	r.HandleFunc(links.PageViewPath+"{id:[a-z0-9-]+}", viewPage)
+	r.HandleFunc(links.PageEditPath+"{id:[a-z0-9-]+}", editPage)
+	r.HandleFunc(links.PageSavePath+"{id:[a-z0-9-]+}", savePage)
+	r.HandleFunc(links.PageNewPath, newPageHandler)
+	r.HandleFunc(links.PageCreatePath, createPageHandler)
 
 	http.Handle("/", r)
 

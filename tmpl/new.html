@@ -2,16 +2,6 @@
 <h1>New</h1>
 
 <form action="{{.Links.PageCreatePath}}" method="POST">
-<div>
-  <p>Title</p>
-  <textarea name="title">{{printf "%s" .Page.Title}}</textarea>
-</div>
-<div>
-  <p>Post Body</p>
-  <textarea name="body" rows="20" cols="80">{{printf "%s" .Page.Body}}</textarea>
-</div>
-<div>
-  <input type="submit" value="Save">
-</div>
+  {{template "page_form_inner" .}}
 </form>
 {{template "footer"}}
