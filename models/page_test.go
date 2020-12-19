@@ -25,7 +25,7 @@ func tearDown() {
 // TODO: dockerize tests and test setup
 // TODO: make database reset more efficient
 func setUpDB() {
-	cmd := exec.Command("make", "-C", "../", "reset-db")
+	cmd := exec.Command("make", "-C", "../", "reset-db-test")
 	fmt.Println("Resetting the database...")
 	err := cmd.Run()
 	if err != nil {

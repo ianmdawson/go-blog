@@ -32,18 +32,27 @@ dependencies:
 	go mod download
 	go get -u github.com/pressly/goose/cmd/goose
 
-db-setup:
+db-setup: db-setup-test
 	psql $(DATABASE_URL)?sslmode=disable -c "CREATE DATABASE blog_dev;"
+
+db-setup-test:
 	psql $(DATABASE_URL)?sslmode=disable -c "CREATE DATABASE blog_test;"
 
-db-drop:
+db-drop: db-drop-test
 	psql $(DATABASE_URL)?sslmode=disable -c "DROP DATABASE IF EXISTS blog_dev;"
+
+db-drop-test:
 	psql $(DATABASE_URL)?sslmode=disable -c "DROP DATABASE IF EXISTS blog_test;"
 
 reset-db: db-drop db-setup migrate
+	echo "reset-db finished"
 
-migrate:
+reset-db-test: db-drop-test db-setup-test migrate-test
+
+migrate: migrate-test
 	goose postgres $(DEV_DATABASE_URL) up
+
+migrate-test:
 	goose postgres $(TEST_DATABASE_URL) up
 
 migrate-status:
