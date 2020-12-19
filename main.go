@@ -267,12 +267,12 @@ func main() {
 	}
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", indexHandler)
-	r.HandleFunc("/posts/{id:[a-z0-9-]+}", viewPost)
-	r.HandleFunc("/posts/edit/{id:[a-z0-9-]+}", editPost)
-	r.HandleFunc("/posts/save/{id:[a-z0-9-]+}", savePost)
-	r.HandleFunc("/posts/new/", newHandler)
-	r.HandleFunc("/posts/create/", createHandler)
+	r.HandleFunc(links.PageIndexPath, indexHandler)
+	r.HandleFunc(links.PageViewPath+"{id:[a-z0-9-]+}", viewPost)
+	r.HandleFunc(links.PageEditPath+"{id:[a-z0-9-]+}", editPost)
+	r.HandleFunc(links.PageSavePath+"{id:[a-z0-9-]+}", savePost)
+	r.HandleFunc(links.PageNewPath, newHandler)
+	r.HandleFunc(links.PageCreatePath, createHandler)
 
 	http.Handle("/", r)
 
