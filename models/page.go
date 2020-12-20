@@ -16,6 +16,17 @@ type Page struct {
 	UpdatedAt time.Time
 }
 
+// PageCollection is a collection of Page results. Contains metadata useful for pagination
+type PageCollection struct {
+	Pages             []*Page
+	Count             int
+	ResultsPageNumber int
+	Limit             int
+	NextPage          int
+	PreviousPage      int
+	AtLastPage        bool
+}
+
 // Update the existing page in the database
 func (p *Page) Update() error {
 	sql := ` -- name: PageUpdate :one
@@ -62,7 +73,7 @@ func (p *Page) Find(id uuid.UUID) error {
 
 // GetAllPages retrieves all Page models in the database
 // limit the number of results to return
-// offset the number of results to skip, useful for pagination
+// offset the number of results to skip
 func GetAllPages(offset int, limit int) ([]*Page, error) {
 	sql := `SELECT id, title, body, created_at, updated_at FROM pages ORDER BY created_at DESC OFFSET $1 LIMIT $2;`
 	rows, err := DB.Query(context.Background(), sql, offset, limit)
@@ -83,6 +94,40 @@ func GetAllPages(offset int, limit int) ([]*Page, error) {
 	}
 
 	return pages, nil
+}
+
+func GetPageCollection(offset int, limit int) (*PageCollection, error) {
+	pages, err := GetAllPages(offset, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := CountAllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	resultsPageNumber := 1
+	if offset != 0 {
+		resultsPageNumber = (limit / offset) + 1
+	}
+
+	prevPageNumber := resultsPageNumber - 1
+	if prevPageNumber < 0 {
+		prevPageNumber = 0
+	}
+
+	atLastPage := ((resultsPageNumber-1)*limit)+len(pages) >= count
+	collection := PageCollection{
+		pages,
+		count,
+		resultsPageNumber,
+		limit,
+		resultsPageNumber + 1,
+		resultsPageNumber - 1,
+		atLastPage,
+	}
+	return &collection, nil
 }
 
 // CountAllPages returns the number of page records

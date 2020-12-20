@@ -172,19 +172,21 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	limitParam := q["limit"]
-	limit := 50
+	defaultLimit := 5
+	maxLimit := 10
+	limit := defaultLimit
 	if len(limitParam) > 0 {
 		limitInt, err := strconv.Atoi(limitParam[0])
 		if err != nil {
 			fmt.Println("An error occurred parsing the resultsLimitParam", err)
 		}
-		if limitInt > 0 && limitInt < 50 {
+		if limitInt > 0 && limitInt < maxLimit {
 			limit = limitInt
 		}
 	}
 
 	offset := (resultsPage - 1) * limit
-	pages, err := models.GetAllPages(offset, limit)
+	pageCollection, err := models.GetPageCollection(offset, limit)
 	if err != nil {
 		fmt.Println("Something went wrong loading pages:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -205,39 +207,13 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		firstPage = firstPages[0]
 	}
 
-	count, err := models.CountAllPages()
-	if err != nil {
-		fmt.Println("Something went wrong loading pages count:", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	prevPageNumber := resultsPage - 1
-	if prevPageNumber < 0 {
-		prevPageNumber = 0
-	}
-	atLastPage := ((resultsPage-1)*limit)+len(pages) >= count
-
-	// TODO: move pagination params into their own struct to clean up indexHandler
 	indexData := struct {
-		Pages             []*models.Page
-		Page              *models.Page
-		Count             int
-		ResultsPageNumber int
-		Limit             int
-		NextPage          int
-		PreviousPage      int
-		AtLastPage        bool
-		Links             PagePatterns
+		Page           *models.Page
+		PageCollection *models.PageCollection
+		Links          PagePatterns
 	}{
-		pages,
 		firstPage,
-		count,
-		resultsPage,
-		limit,
-		resultsPage + 1,
-		resultsPage - 1,
-		atLastPage,
+		pageCollection,
 		PagePaths,
 	}
 	err = Templates.ExecuteTemplate(w, "index.html", indexData)
