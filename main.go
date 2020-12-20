@@ -19,9 +19,7 @@ import (
 // - routing/http handler tests
 
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
-// - Page edit/new shared submission form template
 // - logging middleware
-// - separate log/routing logic into logger/"routes"?
 // - Implement inter-page linking by converting instances of [PageName] to
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this?)
 
