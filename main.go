@@ -12,11 +12,6 @@ import (
 	"github.com/ianmdawson/go-blog/models"
 )
 
-const templateDir string = "tmpl"
-
-// Temporary until all handlers are moved to the handlers package
-var templates = handlers.Templates
-
 // TODO:
 // - Users and permissions
 // - Documentation
@@ -29,8 +24,6 @@ var templates = handlers.Templates
 // - separate log/routing logic into logger/"routes"?
 // - Implement inter-page linking by converting instances of [PageName] to
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this?)
-
-var links = handlers.PagePaths
 
 func databaseURL() string {
 	var databaseURL = os.Getenv("DATABASE_URL")
