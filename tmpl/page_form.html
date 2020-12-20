@@ -1,13 +1,22 @@
 {{define "page_form_inner"}}
+<script>
+  // While a form field is selected, submit the form with ctrl + enter or cmd + enter
+  document.forms["page-form"].onkeydown = keydown;
+  function keydown(e) {
+    if ((e.ctrlKey || e.metaKey) && e.which == 13) {
+      return document.forms["page-form"].requestSubmit();
+    }
+  };
+</script>
 <div class="mb-3">
   <label for="title" class="form-label">Title</label>
   <input type="text" class="form-control" name='title' value='{{printf "%s" .Page.Title}}'>
 </div>
 <div>
   <label for="post-body" class="form-label">Content</label>
-  <textarea class="form-control" name="body" rows="20">{{printf "%s" .Page.Body}}</textarea>
+  <textarea class="form-control" name="body" rows="10">{{printf "%s" .Page.Body}}</textarea>
 </div>
 <div>
-  <button type="submit" id="save-page-button" value="Save" class="btn btn-primary mb-3">Save</button>
+  <button type="submit" id="submit-page-button" value="Save" class="btn btn-primary my-3">Save</button>
 </div>
 {{end}}

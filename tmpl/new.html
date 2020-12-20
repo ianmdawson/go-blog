@@ -1,7 +1,7 @@
 {{template "header" .}}
 <h1>New</h1>
 
-<form action="{{.Links.PageCreatePath}}" method="POST">
+<form form='page' id='page-form' action="{{.Links.PagePatterns.PageCreatePath}}" method="POST">
   {{template "page_form_inner" .}}
 </form>
 {{template "footer"}}

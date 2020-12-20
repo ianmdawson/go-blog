@@ -30,7 +30,7 @@ func TestNewPageHandler(t *testing.T) {
 	}
 
 	// Check the response body is what we expect.
-	expectedStrings := []string{"<h1>New</h1>", "Title", "Content", "<button type=\"submit\"", "id=\"save-page-button\""}
+	expectedStrings := []string{"<h1>New</h1>", "Title", "Content", "<button type=\"submit\"", "id=\"submit-page-button\""}
 	for _, expected := range expectedStrings {
 		if strings.Contains(rr.Body.String(), expected) != true {
 			t.Errorf("handler returned unexpected body: %v \n want: %v",

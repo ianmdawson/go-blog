@@ -1,29 +1,39 @@
 {{template "header" .}}
 <div class="row mb-3">
+  <div class="col-md-8">
+    {{if not .Page}}
+      No pages yet!
+    {{- else}}
+      {{template "viewPartial" .}}
+    {{end}}
+  </div>
   <div class="col-md-4" id='most-recent-page-collection'>
-    <span>Showing {{len .PageCollection.Pages}} of total: {{.PageCollection.Count}}</span>
+    <span>Recent posts {{len .PageCollection.Pages}} of total: {{.PageCollection.Count}}</span>
     <nav aria-label="Page Navigation">
       <ul class="pagination">
         {{if eq .PageCollection.ResultsPageNumber 1}}
-          <li class="page-item disabled">
-            <a class='page-link' href='#' tabindex='-1' aria-disabled='true'>Previous</a>
-          </li>
+        <li class="page-item disabled">
+          <a class='page-link' href='#' tabindex='-1' aria-disabled='true'>Previous</a>
+        </li>
         {{- else}}
-          <li class="page-item">
-            <a class="page-link"
-              href="{{.Links.PageIndexPath}}?page={{.PageCollection.PreviousPage}}&limit={{.PageCollection.Limit}}">Previous</a>
-            </li>
+        <li class="page-item">
+          <a class="page-link"
+            href="{{.Links.PagePatterns.PageIndexPath}}?page={{.PageCollection.PreviousPage}}&limit={{.PageCollection.Limit}}">Previous</a>
+        </li>
         {{end}}
-        
-        <li class="page-item"><a class="page-link" href="{{.Links.PageIndexPath}}?page={{.PageCollection.ResultsPageNumber}}&limit={{.PageCollection.Limit}}">{{.PageCollection.ResultsPageNumber}}</a></li>
+  
+        <li class="page-item"><a class="page-link"
+            href="{{.Links.PagePatterns.PageIndexPath}}?page={{.PageCollection.ResultsPageNumber}}&limit={{.PageCollection.Limit}}">{{.PageCollection.ResultsPageNumber}}</a>
+        </li>
         {{if .PageCollection.AtLastPage}}
-          <li class="page-item disabled">
-            <a class='page-link' href='#' tabindex='-1' aria-disabled='true'>Next</a>
-          </li>
+        <li class="page-item disabled">
+          <a class='page-link' href='#' tabindex='-1' aria-disabled='true'>Next</a>
+        </li>
         {{- else}}
-          <li class="page-item">
-            <a class="page-link" href='{{.Links.PageIndexPath}}?page={{.PageCollection.NextPage}}&limit={{.PageCollection.Limit}}'>Next</a>
-          </li>
+        <li class="page-item">
+          <a class="page-link"
+            href='{{.Links.PagePatterns.PageIndexPath}}?page={{.PageCollection.NextPage}}&limit={{.PageCollection.Limit}}'>Next</a>
+        </li>
         {{end}}
       </ul>
     </nav>
@@ -34,20 +44,13 @@
       </thead>
       <tbody>
         {{range .PageCollection.Pages}}
-          <tr>
-            <td><a href="{{$.Links.PageViewPath}}{{.ID}}">{{.Title}}</a></td>
-            <td>{{.CreatedAt.Format "Mon Jan 2 15:04 MST 2006" }}</td>
-          </tr>
+        <tr>
+          <td><a href="{{$.Links.PagePatterns.PageViewPath}}{{.ID}}">{{.Title}}</a></td>
+          <td>{{.CreatedAt.Format "Mon Jan 2 15:04 MST 2006" }}</td>
+        </tr>
         {{end}}
       </tbody>
     </table>
-  </div>
-  <div class="col-md-8">
-    {{if not .Page}}
-      No pages yet!
-    {{- else}}
-      {{template "viewPartial" .}}
-    {{end}}
   </div>
 </div>
 {{template "footer"}}

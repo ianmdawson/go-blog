@@ -9,10 +9,17 @@
     {{with .Links}}
     <ul class="navbar-nav mr-auto">
       <li class="nav-item">
-        <a class="nav-link" href='{{.PageIndexPath}}'>Home<span class="sr-only">(current)</span></a>
+        <a class="nav-link" href='{{.PagePatterns.PageIndexPath}}'>Home<span class="sr-only">(current)</span></a>
       </li>
+      {{if eq .CurrentRoute "view"}}
+      {{if $.Page}}
+        <li class="nav-item">
+          <a class="nav-link" href='{{.PagePatterns.PageEditPath}}{{$.Page.ID}}'>Edit</a>
+        </li>
+      {{end}}
+      {{end}}
       <li class="nav-item">
-        <a class="nav-link" href='{{.PageNewPath}}'>New</a>
+        <a class="nav-link" href='{{.PagePatterns.PageNewPath}}'>New</a>
       </li>
     </ul>
     {{end}}

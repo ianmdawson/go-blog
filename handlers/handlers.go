@@ -24,8 +24,8 @@ var templateDir string = basepath + "/../tmpl"
 // Templates are the html templates for the blog
 var Templates = template.Must(template.ParseGlob(templateDir + "/*.html"))
 
-// PagePatterns dictates which paths are available for the interacting with the Page model
-type PagePatterns struct {
+// PageURIPatterns dictates which paths are available for the interacting with the Page model
+type PageURIPatterns struct {
 	PageEditPath   string
 	PageIndexPath  string
 	PageNewPath    string
@@ -34,9 +34,15 @@ type PagePatterns struct {
 	PageSavePath   string
 }
 
+// Links makes handling navigation-related logic a little easier
+type Links struct {
+	PagePatterns PageURIPatterns
+	CurrentRoute string
+}
+
 // PagePaths Returns all page URI pattern prefixes
 // PagePaths page paths for routing and linking
-var PagePaths = PagePatterns{
+var PagePaths = PageURIPatterns{
 	PageEditPath:   "/pages/edit/",
 	PageIndexPath:  "/",
 	PageNewPath:    "/pages/new/",
@@ -141,16 +147,22 @@ func LoadPage(id string) (*models.Page, error) {
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *models.Page) {
+	links := Links{
+		PagePaths,
+		tmpl,
+	}
 	var templateData = struct {
 		Page  *models.Page
-		Links PagePatterns
+		Links Links
 	}{
 		p,
-		PagePaths,
+		links,
 	}
 	err := Templates.ExecuteTemplate(w, tmpl+".html", templateData)
 	if err != nil {
+		fmt.Println("Error exectuing template: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -207,16 +219,21 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		firstPage = firstPages[0]
 	}
 
+	const tmpl string = "index"
+
 	indexData := struct {
 		Page           *models.Page
 		PageCollection *models.PageCollection
-		Links          PagePatterns
+		Links          Links
 	}{
 		firstPage,
 		pageCollection,
-		PagePaths,
+		Links{
+			PagePaths,
+			tmpl,
+		},
 	}
-	err = Templates.ExecuteTemplate(w, "index.html", indexData)
+	err = Templates.ExecuteTemplate(w, tmpl+".html", indexData)
 	if err != nil {
 		fmt.Println("500", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
