@@ -8,9 +8,9 @@
     {{end}}
   </div>
   <div class="col-md-4" id='most-recent-page-collection'>
-    <span>Recent posts {{len .PageCollection.Pages}} of total: {{.PageCollection.Count}}</span>
+    <h6>Recent Posts</h6>
     <nav aria-label="Page Navigation">
-      <ul class="pagination">
+      <ul class="pagination pagination-sm">
         {{if eq .PageCollection.ResultsPageNumber 1}}
         <li class="page-item disabled">
           <a class='page-link' href='#' tabindex='-1' aria-disabled='true'>Previous</a>
@@ -37,6 +37,7 @@
         {{end}}
       </ul>
     </nav>
+    <small>Showing {{len .PageCollection.Pages}} of total: {{.PageCollection.Count}}</small>
     <table class="table">
       <thead>
         <th scope="col">Title</th>

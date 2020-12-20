@@ -146,6 +146,7 @@ func LoadPage(id string) (*models.Page, error) {
 	return page, nil
 }
 
+// some shared template rendering logic for simple New/Edit/View templates
 func renderTemplate(w http.ResponseWriter, tmpl string, p *models.Page) {
 	links := Links{
 		PagePaths,
