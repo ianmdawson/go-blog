@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"path/filepath"
 	"runtime"
@@ -11,6 +12,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/ianmdawson/go-blog/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -24,7 +26,7 @@ var templateDir string = basepath + "/../tmpl"
 // Templates are the html templates for the blog
 var Templates = template.Must(template.ParseGlob(templateDir + "/*.html"))
 
-// PageURIPatterns dictates which paths are available for the interacting with the Page model
+// PageURIPatterns dictates which paths are available for interacting with the Page model
 type PageURIPatterns struct {
 	PageEditPath   string
 	PageIndexPath  string
@@ -34,10 +36,25 @@ type PageURIPatterns struct {
 	PageSavePath   string
 }
 
+// UserURIPatterns disctates which paths are available for the User model
+type UserURIPatterns struct {
+	UserCreatePath       string
+	UserLogInPath        string
+	UserAuthenticatePath string
+}
+
 // Links makes handling navigation-related logic a little easier
 type Links struct {
 	PagePatterns PageURIPatterns
+	UserPatterns UserURIPatterns
 	CurrentRoute string
+}
+
+// UserPaths contains all paths for routing and linking
+var UserPaths = UserURIPatterns{
+	UserCreatePath:       "/users/create",
+	UserLogInPath:        "/users/log_in/",
+	UserAuthenticatePath: "/users/authenticate/",
 }
 
 // PagePaths Returns all page URI pattern prefixes
@@ -51,16 +68,115 @@ var PagePaths = PageURIPatterns{
 	PageSavePath:   "/pages/save/",
 }
 
+// LogInHandler renders the view for user to log in
+func LogInHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl := "log_in"
+	links := Links{
+		PagePaths,
+		UserPaths,
+		tmpl,
+	}
+	var templateData = struct {
+		Links Links
+	}{
+		links,
+	}
+	err := Templates.ExecuteTemplate(w, tmpl+".html", templateData)
+	if err != nil {
+		log.Println("Error exectuing template: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// SignUpHandler renders the view for the user sign up form
+func SignUpHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl := "sign_up"
+	links := Links{
+		PagePaths,
+		UserPaths,
+		tmpl,
+	}
+	var templateData = struct {
+		Links Links
+	}{
+		links,
+	}
+	err := Templates.ExecuteTemplate(w, tmpl+".html", templateData)
+	if err != nil {
+		log.Println("Error exectuing template: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// AuthenticateUserHandler handles sign in authentication
+func AuthenticateUserHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	if username == "" || password == "" {
+		http.Error(w, "Username or password were empty, try again", http.StatusForbidden)
+		return
+	}
+
+	u := models.User{}
+	err := u.FindByUsername(username)
+	if err != nil {
+		log.Println("Something went wrong while trying to find the user: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = u.Authenticate(password)
+	if err != nil {
+		log.Println("Something went wrong while trying to validate user's credentials: ", err)
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// TODO: persist auth to session somehow, JWT?
+	// https://blog.usejournal.com/authentication-in-golang-c0677bcce1a8
+
+	http.Redirect(w, r, PagePaths.PageIndexPath, http.StatusFound)
+}
+
+// CreateUserHandler processes sign up form and creates a new user
+func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	if username == "" || password == "" {
+		http.Error(w, "Username or password were empty, try again", http.StatusUnprocessableEntity)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Println("Could not generate hash from password: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	u := models.User{
+		Username: username,
+		Password: hash,
+		Role:     "user",
+	}
+	err = u.Create()
+	if err != nil {
+		log.Println("Something went wrong while trying to create the user: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, PagePaths.PageIndexPath, http.StatusFound)
+}
+
 // NewPage renders the new page template for users to create a new Page
 func NewPage(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 	renderTemplate(w, "new", &models.Page{})
 }
 
 // ViewPage renders the Page if the given ID exists, otherwise it redirects to NewPage
 func ViewPage(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
-
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -76,8 +192,6 @@ func ViewPage(w http.ResponseWriter, r *http.Request) {
 
 // EditPage renders the edit template for a given :id in query the params
 func EditPage(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
-
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -91,7 +205,6 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 
 // SavePage saves/updates an existing page
 func SavePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 	body := r.FormValue("body")
 	title := r.FormValue("title")
 
@@ -115,7 +228,6 @@ func SavePage(w http.ResponseWriter, r *http.Request) {
 
 // CreatePageHandler creates a new Page
 func CreatePageHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 	body := r.FormValue("body")
 	title := r.FormValue("title")
 	uuid, err := uuid.NewV4()
@@ -150,6 +262,7 @@ func LoadPage(id string) (*models.Page, error) {
 func renderTemplate(w http.ResponseWriter, tmpl string, p *models.Page) {
 	links := Links{
 		PagePaths,
+		UserPaths,
 		tmpl,
 	}
 	var templateData = struct {
@@ -169,7 +282,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *models.Page) {
 
 // IndexHandler renders the index Page index page, the most recent Page and a list of other most recent pages
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s %s\n", r.Method, r.URL.Path) // log request
 	q := r.URL.Query()
 	resultsPageParam := q["page"]
 	resultsPage := 1
@@ -231,6 +343,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		pageCollection,
 		Links{
 			PagePaths,
+			UserPaths,
 			tmpl,
 		},
 	}

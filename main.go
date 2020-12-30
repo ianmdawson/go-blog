@@ -57,6 +57,11 @@ func main() {
 	r.HandleFunc(pagePaths.PageNewPath, handlers.NewPage)
 	r.HandleFunc(pagePaths.PageCreatePath, handlers.CreatePageHandler)
 
+	r.HandleFunc("/signup/", handlers.SignUpHandler)
+	r.HandleFunc(handlers.UserPaths.UserCreatePath, handlers.CreateUserHandler)
+	r.HandleFunc(handlers.UserPaths.UserLogInPath, handlers.LogInHandler)
+	r.HandleFunc(handlers.UserPaths.UserAuthenticatePath, handlers.AuthenticateUserHandler)
+
 	http.Handle("/", r)
 
 	port := ":8080"

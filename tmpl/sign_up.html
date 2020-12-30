@@ -1,0 +1,26 @@
+{{template "header" .}}
+<h1>Sign Up</h1>
+
+<form form='sign-up' id='sign-up-form' action="{{.Links.UserPatterns.UserCreatePath}}" method="POST" class="col-4">
+  <script>
+    // While a form field is selected, submit the form with ctrl + enter or cmd + enter
+    document.forms["sign-up-form"].onkeydown = keydown;
+    function keydown(e) {
+      if ((e.ctrlKey || e.metaKey) && e.which == 13) {
+        return document.forms["sign-up-form"].requestSubmit();
+      }
+    };
+  </script>
+  <div class="mb-3">
+    <label for="username" class="form-label">Username</label>
+    <input type="text" class="form-control" name="username">
+  </div>
+  <div>
+    <label for="post-body" class="form-label">Password</label>
+    <input type="password" class="form-control" name="password">
+  </div>
+  <div>
+    <button type="submit" id="submit-page-button" value="Save" class="btn btn-primary my-3">Submit</button>
+  </div>
+</form>
+{{template "footer" .}}
