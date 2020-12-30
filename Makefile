@@ -60,8 +60,8 @@ migrate-status:
 	goose postgres $(TEST_DATABASE_URL) status
 
 migrate-down:
-	goose postgres $(DEV_DATABASE_URL) status
-	goose postgres $(TEST_DATABASE_URL) status
+	goose postgres $(DEV_DATABASE_URL) down
+	goose postgres $(TEST_DATABASE_URL) down
 
 migrate-reset:
 	goose postgres $(DEV_DATABASE_URL) reset
