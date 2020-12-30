@@ -31,6 +31,15 @@ func databaseURL() string {
 	return "postgres://goblog:password@localhost:5432/blog_dev"
 }
 
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// fmt.Printf("%s %s\n", , r.URL.Path) // log request
+		log.Println(r.Method, r.RequestURI)
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	err := models.InitDB(databaseURL())
 	if err != nil {
@@ -38,6 +47,8 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+	r.Use(loggingMiddleware)
+
 	pagePaths := handlers.PagePaths
 	r.HandleFunc(pagePaths.PageIndexPath, handlers.IndexHandler)
 	r.HandleFunc(pagePaths.PageViewPath+"{id:[a-z0-9-]+}", handlers.ViewPage)
