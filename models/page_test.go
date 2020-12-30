@@ -24,6 +24,7 @@ func tearDown() {
 
 // TODO: dockerize tests and test setup
 // TODO: make database reset more efficient
+// TODO: avoid requiring the database setup at all via mocking: https://github.com/jackc/pgx/issues/616#issuecomment-535749087
 func setUpDB() {
 	cmd := exec.Command("make", "-C", "../", "reset-db-test")
 	fmt.Println("Resetting the database...")
