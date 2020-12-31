@@ -3,7 +3,9 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/jackc/pgx/v4"
 )
@@ -26,4 +28,28 @@ func InitDB(databaseURL string) error {
 	}
 	DB = conn
 	return nil
+}
+
+// TTearDown test helper method that handles closes the database connection
+// after running SetUpDB, simply add the following line:
+// defer TearDown()
+func TTearDown() {
+	DB.Close(context.Background())
+	return
+}
+
+// TSetUpDB test helper method that resets the test database, handles connecting to the test database
+func TSetUpDB() {
+	cmd := exec.Command("make", "-C", "../", "reset-db-test")
+	fmt.Println("Resetting the test database...")
+	err := cmd.Run()
+	if err != nil {
+		panic(fmt.Sprint("Failed to reset the database:", err))
+	}
+
+	databaseURL := "postgres://goblog:password@localhost:5432/blog_test"
+	err = InitDB(databaseURL)
+	if err != nil {
+		panic(fmt.Sprint("Could not connect to database", err))
+	}
 }

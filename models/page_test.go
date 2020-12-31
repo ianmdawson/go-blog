@@ -1,9 +1,6 @@
 package models
 
 import (
-	"context"
-	"fmt"
-	"os/exec"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -16,30 +13,6 @@ If you haven't already, run the following to set up the database:
 	$ make db-setup
 	$ make migrate
 */
-
-func tearDown() {
-	DB.Close(context.Background())
-	return
-}
-
-// TODO: dockerize tests and test setup
-// TODO: make database reset more efficient
-// TODO: avoid requiring the database setup at all via mocking: https://github.com/jackc/pgx/issues/616#issuecomment-535749087
-func setUpDB() {
-	cmd := exec.Command("make", "-C", "../", "reset-db-test")
-	fmt.Println("Resetting the database...")
-	err := cmd.Run()
-	if err != nil {
-		panic(fmt.Sprint("Failed to reset the database:", err))
-	}
-
-	databaseURL := "postgres://goblog:password@localhost:5432/blog_test"
-	err = InitDB(databaseURL)
-	if err != nil {
-		panic(fmt.Sprint("Could not connect to database", err))
-	}
-}
-
 const testTitle string = "Test Page Title"
 const testPageBody string = "This is a test"
 
@@ -54,8 +27,8 @@ func seedDatabase(t *testing.T) []*Page {
 }
 
 func TestGetAllPages(t *testing.T) {
-	setUpDB()
-	defer tearDown()
+	TSetUpDB()
+	defer TTearDown()
 	createdPages := seedDatabase(t)
 
 	offset := 0
@@ -72,8 +45,8 @@ func TestGetAllPages(t *testing.T) {
 }
 
 func TestCountAllPages(t *testing.T) {
-	setUpDB()
-	defer tearDown()
+	TSetUpDB()
+	defer TTearDown()
 	_ = seedDatabase(t)
 
 	count, err := CountAllPages()
@@ -82,8 +55,8 @@ func TestCountAllPages(t *testing.T) {
 }
 
 func TestPageFind(t *testing.T) {
-	setUpDB()
-	defer tearDown()
+	TSetUpDB()
+	defer TTearDown()
 
 	createdPages := seedDatabase(t)
 
@@ -98,8 +71,8 @@ func TestPageFind(t *testing.T) {
 }
 
 func TestPageUpdate(t *testing.T) {
-	setUpDB()
-	defer tearDown()
+	TSetUpDB()
+	defer TTearDown()
 
 	createdPages := seedDatabase(t)
 

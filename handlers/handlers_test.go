@@ -1,36 +1,13 @@
 package handlers
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os/exec"
 	"strings"
 	"testing"
 
 	"github.com/ianmdawson/go-blog/models"
 )
-
-func tearDown() {
-	models.DB.Close(context.Background())
-	return
-}
-
-func setUpDB() {
-	cmd := exec.Command("make", "-C", "../", "reset-db-test")
-	fmt.Println("Resetting the test database...")
-	err := cmd.Run()
-	if err != nil {
-		panic(fmt.Sprint("Failed to reset the database:", err))
-	}
-
-	databaseURL := "postgres://goblog:password@localhost:5432/blog_test"
-	err = models.InitDB(databaseURL)
-	if err != nil {
-		panic(fmt.Sprint("Could not connect to database", err))
-	}
-}
 
 func TestNewPageHandler(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
@@ -65,8 +42,8 @@ func TestNewPageHandler(t *testing.T) {
 }
 
 func TestIndexHandler(t *testing.T) {
-	setUpDB()
-	defer tearDown()
+	models.TSetUpDB()
+	defer models.TTearDown()
 
 	req, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
