@@ -30,7 +30,7 @@ func setUpDB() {
 	fmt.Println("Resetting the database...")
 	err := cmd.Run()
 	if err != nil {
-		panic(fmt.Sprint("Failed to rest the database:", err))
+		panic(fmt.Sprint("Failed to reset the database:", err))
 	}
 
 	databaseURL := "postgres://goblog:password@localhost:5432/blog_test"

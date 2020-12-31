@@ -19,10 +19,10 @@ func tearDown() {
 
 func setUpDB() {
 	cmd := exec.Command("make", "-C", "../", "reset-db-test")
-	fmt.Println("Resetting the database...")
+	fmt.Println("Resetting the test database...")
 	err := cmd.Run()
 	if err != nil {
-		panic(fmt.Sprint("Failed to rest the database:", err))
+		panic(fmt.Sprint("Failed to reset the database:", err))
 	}
 
 	databaseURL := "postgres://goblog:password@localhost:5432/blog_test"

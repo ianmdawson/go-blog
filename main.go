@@ -5,31 +5,22 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/ianmdawson/go-blog/handlers"
 	"github.com/ianmdawson/go-blog/models"
+	"github.com/joho/godotenv"
 )
 
 // TODO:
 // - Users and permissions
-// - Documentation
+// - Better documentation
 
-// - routing/http handler tests
+// - More routing/http handler tests
 
 // - Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
-// - logging middleware
 // - Implement inter-page linking by converting instances of [PageName] to
 //     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this?)
-
-func databaseURL() string {
-	var databaseURL = os.Getenv("DATABASE_URL")
-	if databaseURL != "" {
-		return databaseURL
-	}
-	return "postgres://goblog:password@localhost:5432/blog_dev"
-}
 
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +32,12 @@ func loggingMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	err := models.InitDB(databaseURL())
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	err = models.InitDB("")
 	if err != nil {
 		panic(err)
 	}
