@@ -38,6 +38,8 @@ func TTearDown() {
 	return
 }
 
+// TODO: resetting the database this way doesn't work when multiple test files need to run. Update tests to mock database connection instead.
+
 // TSetUpDB test helper method that resets the test database, handles connecting to the test database
 func TSetUpDB() {
 	cmd := exec.Command("make", "-C", "../", "reset-db-test")
