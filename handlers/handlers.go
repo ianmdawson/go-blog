@@ -5,16 +5,19 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/ianmdawson/go-blog/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
+var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 var (
 	_, b, _, _ = runtime.Caller(0)
 	// basepath is the package root directory
