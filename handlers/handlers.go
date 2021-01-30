@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,10 +11,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/ianmdawson/go-blog/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
@@ -42,25 +38,10 @@ type PageURIPatterns struct {
 	PageSavePath   string
 }
 
-// UserURIPatterns disctates which paths are available for the User model
-type UserURIPatterns struct {
-	UserCreatePath       string
-	UserLogInPath        string
-	UserAuthenticatePath string
-}
-
 // Links makes handling navigation-related logic a little easier
 type Links struct {
 	PagePatterns PageURIPatterns
-	UserPatterns UserURIPatterns
 	CurrentRoute string
-}
-
-// UserPaths contains all paths for routing and linking
-var UserPaths = UserURIPatterns{
-	UserCreatePath:       "/users/create",
-	UserLogInPath:        "/users/log_in/",
-	UserAuthenticatePath: "/users/authenticate/",
 }
 
 // PagePaths Returns all page URI pattern prefixes
@@ -72,154 +53,6 @@ var PagePaths = PageURIPatterns{
 	PageViewPath:   "/pages/",
 	PageCreatePath: "/pages/create/",
 	PageSavePath:   "/pages/save/",
-}
-
-// TODO:
-// When a user logs in to your site via a POST under TLS, determine if the password is valid.
-// Then issue a random session key, say 50 or more crypto rand characters and stuff in a secure Cookie.
-// Add that session key to the UserSession table.
-// Then when you see that user again, first hit the UserSession table to see if the SessionKey is in there with a valid LoginTime and LastSeenTime and User is not deleted. You could design it so a timer automatically clears out old rows in UserSession."
-
-type userContextKey string
-
-// SessionMiddleware pulls the userID and session token out of the session. If authentication is valid, it adds the user to the request context.
-func SessionMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: maybe rename session-name
-		// Get a session. We're ignoring the error resulted from decoding an
-		// existing session: Get() always returns a session, even if empty.
-		session, _ := store.Get(r, "session-name")
-		userID := session.Values["user_id"]
-		if userID == nil {
-			fmt.Println("No user ID")
-		} else {
-			fmt.Println("user id:", userID)
-		}
-
-		// TODO: check user against UserSession table in the database to see if info matches
-		ctx := context.WithValue(r.Context(), userContextKey("user_id"), userID)
-
-		// add user to context if valid
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// LogInHandler renders the view for user to log in
-func LogInHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := "log_in"
-	links := Links{
-		PagePaths,
-		UserPaths,
-		tmpl,
-	}
-	var templateData = struct {
-		Links Links
-	}{
-		links,
-	}
-	err := Templates.ExecuteTemplate(w, tmpl+".html", templateData)
-	if err != nil {
-		log.Println("Error exectuing template: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-// SignUpHandler renders the view for the user sign up form
-func SignUpHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := "sign_up"
-	links := Links{
-		PagePaths,
-		UserPaths,
-		tmpl,
-	}
-	var templateData = struct {
-		Links Links
-	}{
-		links,
-	}
-	err := Templates.ExecuteTemplate(w, tmpl+".html", templateData)
-	if err != nil {
-		log.Println("Error exectuing template: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-// AuthenticateUserHandler handles sign in authentication
-func AuthenticateUserHandler(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
-	password := r.FormValue("password")
-
-	if username == "" || password == "" {
-		http.Error(w, "Username or password were empty, try again", http.StatusForbidden)
-		return
-	}
-
-	u := models.User{}
-	err := u.FindByUsername(username)
-	if err != nil {
-		log.Println("Something went wrong while trying to find the user: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = u.Authenticate(password)
-	if err != nil {
-		log.Println("Something went wrong while trying to validate user's credentials: ", err)
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Set some session values.
-	session.Values["user_id"] = u.ID.String()
-	// TODO: save token and username in UserSessions table
-	session.Values["user_token"] = securecookie.GenerateRandomKey(32)
-
-	// Save it before we write to the response/return from the handler.
-	err = session.Save(r, w)
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, PagePaths.PageIndexPath, http.StatusFound)
-}
-
-// CreateUserHandler processes sign up form and creates a new user
-func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
-	password := r.FormValue("password")
-
-	if username == "" || password == "" {
-		http.Error(w, "Username or password were empty, try again", http.StatusUnprocessableEntity)
-		return
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Println("Could not generate hash from password: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	u := models.User{
-		Username: username,
-		Password: hash,
-		Role:     "user",
-	}
-	err = u.Create()
-	if err != nil {
-		log.Println("Something went wrong while trying to create the user: ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	http.Redirect(w, r, PagePaths.PageIndexPath, http.StatusFound)
 }
 
 // NewPage renders the new page template for users to create a new Page
@@ -314,7 +147,6 @@ func LoadPage(id string) (*models.Page, error) {
 func renderTemplate(w http.ResponseWriter, tmpl string, p *models.Page) {
 	links := Links{
 		PagePaths,
-		UserPaths,
 		tmpl,
 	}
 	var templateData = struct {
@@ -395,7 +227,6 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		pageCollection,
 		Links{
 			PagePaths,
-			UserPaths,
 			tmpl,
 		},
 	}

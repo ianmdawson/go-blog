@@ -47,7 +47,6 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Use(loggingMiddleware)
-	r.Use(handlers.SessionMiddleware)
 
 	pagePaths := handlers.PagePaths
 	r.HandleFunc(pagePaths.PageIndexPath, handlers.IndexHandler)
@@ -56,11 +55,6 @@ func main() {
 	r.HandleFunc(pagePaths.PageSavePath+"{id:[a-z0-9-]+}", handlers.SavePage)
 	r.HandleFunc(pagePaths.PageNewPath, handlers.NewPage)
 	r.HandleFunc(pagePaths.PageCreatePath, handlers.CreatePageHandler)
-
-	r.HandleFunc("/signup/", handlers.SignUpHandler)
-	r.HandleFunc(handlers.UserPaths.UserCreatePath, handlers.CreateUserHandler)
-	r.HandleFunc(handlers.UserPaths.UserLogInPath, handlers.LogInHandler)
-	r.HandleFunc(handlers.UserPaths.UserAuthenticatePath, handlers.AuthenticateUserHandler)
 
 	http.Handle("/", r)
 
