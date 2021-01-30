@@ -12,22 +12,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// TODO:
-// Users, permissions, settings
-// Better documentation
-// template improvments
-// 	- Spruce up the page templates by making them valid HTML and adding some CSS rules. use yield to crate an application layout instead of header/footer pattern (https://www.calhoun.io/intro-to-templates-p4-v-in-mvc/)
-// 	- Implement inter-page linking by converting instances of [PageName] to
-//     <a href="/view/PageName">PageName</a>. (hint: you could use regexp.ReplaceAllFunc to do this?)
-// testing
-//	- dockerize tests and test setup
-//	- make database reset more efficient
-//	- avoid requiring the database setup at all via mocking: https://github.com/jackc/pgx/issues/616#issuecomment-535749087
-// 	- More routing/http handler tests
-
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// fmt.Printf("%s %s\n", , r.URL.Path) // log request
 		log.Println(r.Method, r.RequestURI)
 		// Call the next handler, which can be another middleware in the chain, or the final handler.
 		next.ServeHTTP(w, r)
