@@ -66,3 +66,6 @@ migrate-down:
 migrate-reset:
 	goose postgres $(DEV_DATABASE_URL) reset
 	goose postgres $(TEST_DATABASE_URL) reset
+
+dump-schema:
+	pg_dump ${DATABASE_URL} --verbose --schema-only --format=plain --file='db/schema.sql'
