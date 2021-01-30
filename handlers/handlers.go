@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"log"
@@ -12,12 +13,14 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/ianmdawson/go-blog/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+
 var (
 	_, b, _, _ = runtime.Caller(0)
 	// basepath is the package root directory
@@ -69,6 +72,36 @@ var PagePaths = PageURIPatterns{
 	PageViewPath:   "/pages/",
 	PageCreatePath: "/pages/create/",
 	PageSavePath:   "/pages/save/",
+}
+
+// TODO:
+// When a user logs in to your site via a POST under TLS, determine if the password is valid.
+// Then issue a random session key, say 50 or more crypto rand characters and stuff in a secure Cookie.
+// Add that session key to the UserSession table.
+// Then when you see that user again, first hit the UserSession table to see if the SessionKey is in there with a valid LoginTime and LastSeenTime and User is not deleted. You could design it so a timer automatically clears out old rows in UserSession."
+
+type userContextKey string
+
+// SessionMiddleware pulls the userID and session token out of the session. If authentication is valid, it adds the user to the request context.
+func SessionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: maybe rename session-name
+		// Get a session. We're ignoring the error resulted from decoding an
+		// existing session: Get() always returns a session, even if empty.
+		session, _ := store.Get(r, "session-name")
+		userID := session.Values["user_id"]
+		if userID == nil {
+			fmt.Println("No user ID")
+		} else {
+			fmt.Println("user id:", userID)
+		}
+
+		// TODO: check user against UserSession table in the database to see if info matches
+		ctx := context.WithValue(r.Context(), userContextKey("user_id"), userID)
+
+		// add user to context if valid
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 // LogInHandler renders the view for user to log in
@@ -136,8 +169,24 @@ func AuthenticateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: persist auth to session somehow, JWT?
-	// https://blog.usejournal.com/authentication-in-golang-c0677bcce1a8
+	session, err := store.Get(r, "session-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set some session values.
+	session.Values["user_id"] = u.ID.String()
+	// TODO: save token and username in UserSessions table
+	session.Values["user_token"] = securecookie.GenerateRandomKey(32)
+
+	// Save it before we write to the response/return from the handler.
+	err = session.Save(r, w)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	http.Redirect(w, r, PagePaths.PageIndexPath, http.StatusFound)
 }

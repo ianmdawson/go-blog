@@ -13,13 +13,23 @@ import (
 // DB holds the database connection for all models
 var DB *pgx.Conn
 
+// DatabaseURL retrieves DATABASE_URL from environment variables, this will be the default database url for the environment
+func DatabaseURL() (string, error) {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return "", errors.New("No DATABASE_URL provided, is it set as an environment variable?")
+	}
+	return databaseURL, nil
+}
+
 // InitDB initilizes the connection to the database and sets DB for use
 func InitDB(databaseURL string) error {
 	if databaseURL == "" {
-		databaseURL = os.Getenv("DATABASE_URL")
-		if databaseURL == "" {
-			return errors.New("No DATABASE_URL provided, is it set as an environment variable?")
+		defaultDatabaseURL, err := DatabaseURL()
+		if err != nil {
+			return err
 		}
+		databaseURL = defaultDatabaseURL
 	}
 
 	conn, err := pgx.Connect(context.Background(), databaseURL)

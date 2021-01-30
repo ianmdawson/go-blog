@@ -47,6 +47,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Use(loggingMiddleware)
+	r.Use(handlers.SessionMiddleware)
 
 	pagePaths := handlers.PagePaths
 	r.HandleFunc(pagePaths.PageIndexPath, handlers.IndexHandler)
