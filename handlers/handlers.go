@@ -67,8 +67,6 @@ func ViewPage(w http.ResponseWriter, r *http.Request) {
 
 	p, err := LoadPage(id)
 	if err != nil {
-		// TODO: make this 404 NotFound instead
-		// http.NotFound(w, r)
 		http.Redirect(w, r, PagePaths.PageNewPath, http.StatusFound)
 		return
 	}
