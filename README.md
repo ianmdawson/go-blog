@@ -16,6 +16,8 @@ cd ${GOPATH}/src/github.com/ianmdawson/go-blog
 docker-compose up --build
 ```
 
+Once setup is complete, you should be able to access the blog by going to `localhost:8080` in a web browser.
+
 ### TODOs
 - Better documentation
 - Markdown handling
