@@ -8,7 +8,6 @@ RUN apk update && apk upgrade && \
   gcc musl-dev
 
 RUN go get -u github.com/pressly/goose/cmd/goose
-# RUN go build -tags='no_mysql no_sqlite3' -i -o github.com/pressly/goose/cmd/goose ./cmd/goose
 
 WORKDIR /src/ianmdawson/go-blog
 # TODO:
@@ -19,7 +18,6 @@ COPY . .
 
 RUN go build -o main .
 
-# TODO: is this necessary?
 EXPOSE 8080
 
 CMD ["/src/ianmdawson/go-blog/main"]

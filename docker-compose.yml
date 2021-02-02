@@ -2,9 +2,11 @@ version: "3.7"
 
 services:
   db:
-    image: postgres:12
+    image: postgres:11
     ports:
       - 5432:5432
+    build:
+      context: ./db
     volumes:
       # Mount the DB dumps folder into the container, to be able to create & access database dumps:
       - ./db/dumps:/db/dumps
